@@ -1,72 +1,142 @@
-if (window.location.pathname.includes("dashboard.html")) {
-    if (localStorage.getItem("loggedIn") !== "true") {
-        window.location.href = "login.html";
-    }
+let chart;
+
+function loadLatest(){
+
+fetch("get_latest.php")
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("temp").innerText = data.temperature
+document.getElementById("humidity").innerText = data.humidity
+document.getElementById("fanStatus").innerText = data.fan
+
+})
+
 }
 
-function turnOnFan() {
-    document.getElementById("fanStatus").innerText = "ON";
-    document.getElementById("message").innerText = "Fan Activated";
+function loadLogs(){
+
+fetch("get_logs.php")
+.then(res=>res.json())
+.then(data=>{
+
+let table=""
+
+let temps=[]
+let hums=[]
+let labels=[]
+
+data.reverse().forEach(row=>{
+
+table += `
+<tr>
+<td>${row.created_at}</td>
+<td>${row.temperature}</td>
+<td>${row.humidity}</td>
+<td>${row.fan_status}</td>
+</tr>
+`
+
+labels.push(row.created_at)
+temps.push(row.temperature)
+hums.push(row.humidity)
+
+})
+
+document.getElementById("logTable").innerHTML = table
+
+updateChart(labels,temps,hums)
+
+})
+
 }
 
-function turnOffFan() {
-    document.getElementById("fanStatus").innerText = "OFF";
-    document.getElementById("message").innerText = "Fan Deactivated";
+function updateChart(labels,temps,hums){
+
+if(chart) chart.destroy()
+
+const ctx=document.getElementById("sensorChart")
+
+chart=new Chart(ctx,{
+
+type:"line",
+
+data:{
+labels:labels,
+datasets:[
+
+{
+label:"Temperature",
+data:temps,
+borderColor:"red",
+fill:false
+},
+
+{
+label:"Humidity",
+data:hums,
+borderColor:"blue",
+fill:false
 }
 
-const ctx = document.getElementById('sensorChart').getContext('2d');
+]
 
-const sensorChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: [],
-        datasets: [
-            {
-                label: 'Temperature °C',
-                borderColor: 'red',
-                data: []
-            },
-            {
-                label: 'Humidity %',
-                borderColor: 'blue',
-                data: []
-            }
-        ]
-    },
-    options: {
-        responsive: true
-    }
-});
+}
 
-setInterval(() => {
+})
 
-    const temp = Math.floor(Math.random() * 5) + 28;
-    const humidity = Math.floor(Math.random() * 10) + 60;
+}
 
-    document.getElementById("temp").innerText = temp;
-    document.getElementById("humidity").innerText = humidity;
+function turnOnFan(){
 
-    const time = new Date().toLocaleString();
-    const fan = document.getElementById("fanStatus").innerText;
+fetch("fan_control.php",{
 
-    sensorChart.data.labels.push(time);
-    sensorChart.data.datasets[0].data.push(temp);
-    sensorChart.data.datasets[1].data.push(humidity);
+method:"POST",
 
-    if (sensorChart.data.labels.length > 10) {
-        sensorChart.data.labels.shift();
-        sensorChart.data.datasets[0].data.shift();
-        sensorChart.data.datasets[1].data.shift();
-    }
+headers:{
+'Content-Type':'application/x-www-form-urlencoded'
+},
 
-    sensorChart.update();
+body:"status=ON"
 
-    const table = document.getElementById("logTable");
-    const row = table.insertRow(0);
+})
+.then(res=>res.text())
+.then(msg=>{
 
-    row.insertCell(0).innerText = time;
-    row.insertCell(1).innerText = temp;
-    row.insertCell(2).innerText = humidity;
-    row.insertCell(3).innerText = fan;
+document.getElementById("message").innerText = msg
 
-}, 3000);
+})
+
+}
+
+function turnOffFan(){
+
+fetch("fan_control.php",{
+
+method:"POST",
+
+headers:{
+'Content-Type':'application/x-www-form-urlencoded'
+},
+
+body:"status=OFF"
+
+})
+.then(res=>res.text())
+.then(msg=>{
+
+document.getElementById("message").innerText = msg
+
+})
+
+}
+
+setInterval(()=>{
+
+loadLatest()
+loadLogs()
+
+},3000)
+
+loadLatest()
+loadLogs()
