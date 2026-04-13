@@ -88,7 +88,7 @@ canvas {
 
 <header>
 <h1>🐔 Smart Chicken Coop</h1>
-<p>Admin Dashboard - 4 Sensors (Right, Left, Front, Back)</p>
+<p>Admin Dashboard - 4 Sensors</p>
 </header>
 
 <div class="container">
@@ -120,10 +120,10 @@ canvas {
 <script>
 // SENSOR CONFIG
 const sensors = [
-  {id:1,name:"Right"},
-  {id:2,name:"Left"},
-  {id:3,name:"Front"},
-  {id:4,name:"Back"}
+  {id:1,name:"North"},
+  {id:2,name:"West"},
+  {id:3,name:"South"},
+  {id:4,name:"East"}
 ];
 
 // CREATE SENSOR CARDS
