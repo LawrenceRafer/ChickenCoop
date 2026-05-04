@@ -24,10 +24,16 @@ header {
 /* MAIN LAYOUT */
 .container {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr; /* left | center | right */
   gap: 15px;
   padding: 15px;
+  align-items: start;
 }
+
+/* PANELS */
+.left-panel {}
+.center-panel {}
+.right-panel {}
 
 /* SENSOR GRID */
 #sensorsContainer {
@@ -60,8 +66,15 @@ button {
   font-size: 12px;
 }
 
-.on { background: green; color: white; }
-.off { background: red; color: white; }
+.on {
+  background: green;
+  color: white;
+}
+
+.off {
+  background: red;
+  color: white;
+}
 
 /* GRAPH */
 canvas {
@@ -75,27 +88,31 @@ canvas {
 
 <header>
 <h1>🐔 Smart Chicken Coop</h1>
-<p>Admin Dashboard - 4 Sensors (Right, Left, Front, Back)</p>
+<p>Admin Dashboard - 4 Sensors</p>
 </header>
 
 <div class="container">
 
-<!-- LEFT: GRAPH -->
-<div class="card">
-  <h2>📈 Environmental Graph</h2>
-  <canvas id="sensorChart"></canvas>
+<!-- LEFT PANEL (GRAPH) -->
+<div class="left-panel">
+  <div class="card">
+    <h2>📈 Environmental Graph</h2>
+    <canvas id="sensorChart"></canvas>
+  </div>
 </div>
 
-<!-- CENTER: SENSORS -->
-<div>
+<!-- CENTER PANEL (SENSORS) -->
+<div class="center-panel">
   <div id="sensorsContainer"></div>
 </div>
 
-<!-- RIGHT: STATUS -->
-<div class="card">
-  <h2>⚡ System Status</h2>
-  <p><strong>System:</strong> Online</p>
-  <p><strong>Last Update:</strong> <span id="lastUpdate">--</span></p>
+<!-- RIGHT PANEL (STATUS) -->
+<div class="right-panel">
+  <div class="card">
+    <h2>⚡ System Status</h2>
+    <p><strong>System:</strong> Online</p>
+    <p><strong>Last Update:</strong> <span id="lastUpdate">--</span></p>
+  </div>
 </div>
 
 </div>
@@ -103,10 +120,10 @@ canvas {
 <script>
 // SENSOR CONFIG
 const sensors = [
-  {id:1,name:"Right"},
-  {id:2,name:"Left"},
-  {id:3,name:"Front"},
-  {id:4,name:"Back"}
+  {id:1,name:"North"},
+  {id:2,name:"West"},
+  {id:3,name:"South"},
+  {id:4,name:"East"}
 ];
 
 // CREATE SENSOR CARDS
@@ -115,20 +132,25 @@ const container = document.getElementById("sensorsContainer");
 sensors.forEach(sensor => {
   const card = document.createElement("div");
   card.className = "card";
+  card.id = `sensor${sensor.id}`;
   card.innerHTML = `
-    <h3>${sensor.name}</h3>
-    <p>Temp: <span class="value" id="temp${sensor.id}">--</span> °C</p>
+    <h2>🌡 ${sensor.name}</h2>
+    <p>Temperature: <span class="value" id="temp${sensor.id}">--</span> °C</p>
     <p>Humidity: <span class="value" id="humidity${sensor.id}">--</span> %</p>
 
-    <p>Fan: <strong id="fanStatus${sensor.id}">--</strong></p>
+    <p>Fan Status: <strong id="fanStatus${sensor.id}">--</strong></p>
 
-    <button class="on" onclick="turnOnFan(${sensor.id})">ON</button>
-    <button class="off" onclick="turnOffFan(${sensor.id})">OFF</button>
+    <div>
+      <button class="on" onclick="turnOnFan(${sensor.id})">ON</button>
+      <button class="off" onclick="turnOffFan(${sensor.id})">OFF</button>
+    </div>
 
     <p>Direction: <span id="direction${sensor.id}">--</span></p>
 
-    <button onclick="setDirection(${sensor.id}, 'IN')">IN</button>
-    <button onclick="setDirection(${sensor.id}, 'OUT')">OUT</button>
+    <div>
+      <button onclick="setDirection(${sensor.id}, 'IN')">IN</button>
+      <button onclick="setDirection(${sensor.id}, 'OUT')">OUT</button>
+    </div>
 
     <p id="message${sensor.id}"></p>
   `;
@@ -148,7 +170,7 @@ function turnOffFan(id){
   updateFanDB(id,"OFF");
 }
 
-// DIRECTION
+// DIRECTION CONTROL
 function setDirection(id, dir){
   document.getElementById(`direction${id}`).innerText = dir;
   document.getElementById(`message${id}`).innerText = `Direction set to ${dir}`;
@@ -161,7 +183,7 @@ function updateTime(){
 }
 setInterval(updateTime, 1000);
 
-// GRAPH (IMPROVED)
+// CHART
 const ctx = document.getElementById("sensorChart");
 
 const sensorChart = new Chart(ctx,{
@@ -169,52 +191,27 @@ const sensorChart = new Chart(ctx,{
   data:{
     labels:[],
     datasets:[
-      {label:"Temp Right",data:[],borderColor:"red",backgroundColor:"rgba(255,0,0,0.1)",fill:true,tension:0.4,borderWidth:2},
-      {label:"Hum Right",data:[],borderColor:"blue",backgroundColor:"rgba(0,0,255,0.1)",fill:true,tension:0.4,borderWidth:2},
-
-      {label:"Temp Left",data:[],borderColor:"orange",backgroundColor:"rgba(255,165,0,0.1)",fill:true,tension:0.4,borderWidth:2},
-      {label:"Hum Left",data:[],borderColor:"green",backgroundColor:"rgba(0,128,0,0.1)",fill:true,tension:0.4,borderWidth:2},
-
-      {label:"Temp Front",data:[],borderColor:"purple",backgroundColor:"rgba(128,0,128,0.1)",fill:true,tension:0.4,borderWidth:2},
-      {label:"Hum Front",data:[],borderColor:"cyan",backgroundColor:"rgba(0,255,255,0.1)",fill:true,tension:0.4,borderWidth:2},
-
-      {label:"Temp Back",data:[],borderColor:"brown",backgroundColor:"rgba(165,42,42,0.1)",fill:true,tension:0.4,borderWidth:2},
-      {label:"Hum Back",data:[],borderColor:"pink",backgroundColor:"rgba(255,192,203,0.1)",fill:true,tension:0.4,borderWidth:2},
+      {label:"Temp Right",data:[],borderColor:"red",fill:false},
+      {label:"Hum Right",data:[],borderColor:"blue",fill:false},
+      {label:"Temp Left",data:[],borderColor:"orange",fill:false},
+      {label:"Hum Left",data:[],borderColor:"green",fill:false},
+      {label:"Temp Front",data:[],borderColor:"purple",fill:false},
+      {label:"Hum Front",data:[],borderColor:"cyan",fill:false},
+      {label:"Temp Back",data:[],borderColor:"brown",fill:false},
+      {label:"Hum Back",data:[],borderColor:"pink",fill:false},
     ]
   },
-
   options:{
     responsive:true,
     animation:false,
-
-    plugins:{
-      legend:{
-        position:'bottom',
-        labels:{font:{size:11}}
-      },
-      tooltip:{
-        mode:'index',
-        intersect:false
-      }
-    },
-
-    interaction:{
-      mode:'nearest',
-      axis:'x',
-      intersect:false
-    },
-
-    scales:{
-      x:{grid:{display:false}},
-      y:{grid:{color:"#ddd"}}
-    }
+    scales:{y:{beginAtZero:false}}
   }
 });
 
-// FETCH DATA
+// FETCH SENSOR DATA
 function updateSensorData(){
   fetch('sensor_data_4.php')
-    .then(res => res.json())
+    .then(response => response.json())
     .then(data => {
       const now = new Date();
       const timeLabel = now.getHours() + ":" + String(now.getMinutes()).padStart(2,"0");
@@ -236,7 +233,8 @@ function updateSensorData(){
       });
 
       sensorChart.update();
-    });
+    })
+    .catch(err => console.error("Error fetching sensor data:", err));
 }
 
 // AUTO UPDATE
